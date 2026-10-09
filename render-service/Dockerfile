@@ -12,14 +12,14 @@ ENV OUTPUT_DIR=/output
 WORKDIR /app
 
 # Copy render service source
-COPY render-service/package.json ./
+COPY render-service/package.json render-service/package-lock.json* ./
 RUN npm install
 
 COPY render-service/tsconfig.json ./
 COPY render-service/src/ ./src/
 
 # Copy remotion source for bundling
-COPY remotion/package.json /app/remotion/package.json
+COPY remotion/package.json remotion/package-lock.json* /app/remotion/
 COPY remotion/tsconfig.json /app/remotion/tsconfig.json
 COPY remotion/src/ /app/remotion/src/
 COPY remotion/public/ /app/remotion/public/

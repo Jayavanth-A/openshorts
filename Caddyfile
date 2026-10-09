@@ -1,0 +1,36 @@
+{$DOMAIN:localhost} {
+    encode zstd gzip
+
+    # Health check
+    handle /health* {
+        reverse_proxy backend:8000
+    }
+
+    # API endpoints
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            transport http {
+                response_header_timeout 600s
+            }
+        }
+    }
+
+    # Video and static delivery
+    handle /videos/* {
+        reverse_proxy backend:8000
+    }
+    handle /thumbnails/* {
+        reverse_proxy backend:8000
+    }
+    handle /gallery/* {
+        reverse_proxy backend:8000
+    }
+    handle /video/* {
+        reverse_proxy backend:8000
+    }
+
+    # Default fallback
+    handle {
+        respond "OpenShorts Backend & Render Engine Gateway" 200
+    }
+}

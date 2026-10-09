@@ -19,6 +19,27 @@ export async function initBundle(): Promise<void> {
 
   bundleLocation = await bundle({
     entryPoint,
+    rootDir: remotionRoot,
+    enableCaching: false,
+    webpackOverride: (config) => ({
+      ...config,
+      resolve: {
+        ...config.resolve,
+        alias: {
+          ...(typeof config.resolve?.alias === "object" && !Array.isArray(config.resolve.alias)
+            ? config.resolve.alias
+            : {}),
+          "remotion$": path.join(
+            remotionRoot,
+            "node_modules",
+            "remotion",
+            "dist",
+            "esm",
+            "index.mjs"
+          ),
+        },
+      },
+    }),
     onProgress: (progress: number) => {
       if (progress % 10 === 0) {
         console.log(`[bundle] Progress: ${progress}%`);

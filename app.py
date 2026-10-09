@@ -2434,10 +2434,14 @@ import free_tools as _free_tools
 app.include_router(_free_tools.router)
 
 # Enable CORS for frontend. Cloud mode locks this down to the configured origins;
-# self-host keeps the permissive wildcard it has always used.
+# self-host defaults to permissive wildcard unless ALLOWED_ORIGINS is provided.
+_cors_env = os.environ.get("ALLOWED_ORIGINS", "")
+_configured_origins = [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else []
+_origins = cloud.settings.allowed_origins if BILLING_ENABLED else (_configured_origins if _configured_origins else ["*"])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cloud.settings.allowed_origins if BILLING_ENABLED else ["*"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

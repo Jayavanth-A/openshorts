@@ -1,0 +1,64 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openshorts-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - RENDER_SERVICE_URL=http://renderer:3100
+      - OUTPUT_DIR=/app/output
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - ./output:/app/output
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8000/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  renderer:
+    build:
+      context: .
+      dockerfile: render-service/Dockerfile
+    container_name: openshorts-renderer
+    restart: unless-stopped
+    environment:
+      - REMOTION_BUNDLE_PATH=/app/remotion
+      - OUTPUT_DIR=/output
+      - PORT=3100
+    volumes:
+      - ./output:/output
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3100/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:alpine
+    container_name: openshorts-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - renderer
+
+volumes:
+  caddy_data:
+  caddy_config:
